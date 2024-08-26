@@ -3,6 +3,7 @@ import Header from './Header';
 import Footer from './Footer';
 import MyPetShow from './MyPetShow';
 
+// กำหนดประเภทของข้อมูลฟอร์มที่เราต้องการเก็บ
 interface FormData {
   petName: string;
   birthDate: string;
@@ -11,24 +12,35 @@ interface FormData {
   description: string;
   ownerName: string;
   email: string;
-  image: File | null;
+  image: File | null; // ใช้ประเภท File หรือ null สำหรับการอัพโหลดไฟล์
 }
 
+// กำหนดค่าเริ่มต้นของข้อมูลฟอร์ม
 const initialFormData: FormData = {
-  petName: '', birthDate: '', category: 'Other', sex: 'Other', description: '', ownerName: '', email: '', image: null,
+  petName: '',
+  birthDate: '',
+  category: 'Other', // ค่าเริ่มต้นของประเภท
+  sex: 'Other', // ค่าเริ่มต้นของเพศ
+  description: '',
+  ownerName: '',
+  email: '',
+  image: null, // ค่าเริ่มต้นของไฟล์ภาพเป็น null
 };
 
+// กำหนดค่าเริ่มต้นของข้อผิดพลาดในฟอร์ม
 const initialErrors = { petName: '', birthDate: '', ownerName: '', email: '' };
 
-const InputField: React.FC<{ name: string; type?: string; value: string; onChange: any; error?: string }> = ({ name, type = 'text', value, onChange, error }) => (
+// คอมโพเนนต์ InputField ใช้สำหรับการกรอกข้อมูลประเภทต่างๆ
+const InputField: React.FC<{ name: string; type?: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; error?: string }> = ({ name, type = 'text', value, onChange, error }) => (
   <div className="mb-4">
     <label className="block text-sm font-medium text-gray-700">{name}:</label>
     <input type={type} name={name} value={value} onChange={onChange} className="border p-2 w-full text-sm" />
-    {error && <span className="text-red-500 text-sm">{error}</span>}
+    {error && <span className="text-red-500 text-sm">{error}</span>} {/* แสดงข้อผิดพลาดถ้ามี */}
   </div>
 );
 
-const RadioGroup: React.FC<{ name: string; options: string[]; value: string; onChange: any }> = ({ name, options, value, onChange }) => (
+// คอมโพเนนต์ RadioGroup ใช้สำหรับการเลือกตัวเลือกแบบ radio
+const RadioGroup: React.FC<{ name: string; options: string[]; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }> = ({ name, options, value, onChange }) => (
   <div className="mb-4">
     <label className="block text-sm font-medium text-gray-700">{name}:</label>
     <div className="space-x-2">
@@ -42,11 +54,13 @@ const RadioGroup: React.FC<{ name: string; options: string[]; value: string; onC
   </div>
 );
 
+// คอมโพเนนต์หลักของฟอร์ม
 const MyPetForm: React.FC = () => {
-  const [formData, setFormData] = useState(initialFormData);
-  const [errors, setErrors] = useState(initialErrors);
-  const [submittedData, setSubmittedData] = useState<FormData | null>(null);
+  const [formData, setFormData] = useState(initialFormData); // สถานะของข้อมูลฟอร์ม
+  const [errors, setErrors] = useState(initialErrors); // สถานะของข้อผิดพลาด
+  const [submittedData, setSubmittedData] = useState<FormData | null>(null); // ข้อมูลที่ส่ง
 
+  // ฟังก์ชันตรวจสอบความถูกต้องของข้อมูล
   const validate = (): boolean => {
     const newErrors = { ...initialErrors };
     let isValid = true;
@@ -56,24 +70,48 @@ const MyPetForm: React.FC = () => {
     if (!formData.ownerName) { newErrors.ownerName = 'Please enter your name'; isValid = false; }
     if (!/\S+@\S+\.\S+/.test(formData.email)) { newErrors.email = 'Please enter a valid email'; isValid = false; }
 
-    setErrors(newErrors);
-    return isValid;
+    setErrors(newErrors); // อัพเดตข้อผิดพลาด
+    return isValid; // คืนค่าความถูกต้องของฟอร์ม
   };
 
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); if (validate()) setSubmittedData(formData); };
-  const handleReset = () => { setFormData(initialFormData); setErrors(initialErrors); setSubmittedData(null); };
+  // ฟังก์ชันจัดการเมื่อฟอร์มถูกส่ง
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // ป้องกันการรีเฟรชหน้า
+    if (validate()) setSubmittedData(formData); // ถ้าข้อมูลถูกต้องให้ตั้งค่า submittedData
+  };
+
+  // ฟังก์ชันจัดการการรีเซ็ตฟอร์ม
+  const handleReset = () => {
+    setFormData(initialFormData); // รีเซ็ตข้อมูลฟอร์ม
+    setErrors(initialErrors); // รีเซ็ตข้อผิดพลาด
+    setSubmittedData(null); // ลบข้อมูลที่ส่ง
+  };
+
+  // ฟังก์ชันจัดการการเปลี่ยนแปลงของฟิลด์ในฟอร์ม
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, files } = e.target;
-    setFormData(prevData => ({ ...prevData, [name]: name === 'image' ? files?.[0] || null : value }));
+    const { name, value, files } = e.target as HTMLInputElement; // ใช้ Type Assertion
+
+    // ถ้า name เป็น 'image' ให้ตรวจสอบ files
+    if (name === 'image') {
+      setFormData(prevData => ({
+        ...prevData,
+        [name]: files && files.length > 0 ? files[0] : null // อัพเดตไฟล์ภาพ
+      }));
+    } else {
+      setFormData(prevData => ({
+        ...prevData,
+        [name]: value // อัพเดตค่าอื่นๆ
+      }));
+    }
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f0f8ff]">
-      <Header />
+      <Header /> {/* แสดง Header */}
       <main className="flex-grow py-6 px-2">
         <div className="container mx-auto bg-white p-6 rounded-lg shadow-md max-w-md">
           {submittedData ? (
-            <MyPetShow data={submittedData} />
+            <MyPetShow data={submittedData} /> // แสดงข้อมูลที่กรอกไว้ถ้ามี
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <h2 className="text-2xl font-bold text-[#555] mb-4">ข้อมูลสัตว์เลี้ยง</h2>
@@ -107,7 +145,7 @@ const MyPetForm: React.FC = () => {
           )}
         </div>
       </main>
-      <Footer />
+      <Footer /> {/* แสดง Footer */}
     </div>
   );
 };
